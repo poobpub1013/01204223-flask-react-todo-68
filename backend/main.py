@@ -55,19 +55,8 @@ def get_todos():
     return jsonify([todo.to_dict() for todo in todos])
 
 def new_todo(data):
-    if len(todo_list) == 0:
-        id = 1
-    else:
-        id = 1 + max([todo['id'] for todo in todo_list])
-
-    if 'title' not in data:
-        return None
-    
-    return {
-        "id": id,
-        "title": data['title'],
-        "done": getattr(data, 'done', False),
-    }
+    return TodoItem(title=data['title'], 
+                    done=data.get('done', False))
 
 @app.route('/api/todos/', methods=['POST'])
 def add_todo():
