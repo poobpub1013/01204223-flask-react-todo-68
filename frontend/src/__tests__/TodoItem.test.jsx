@@ -1,0 +1,54 @@
+import { render, screen } from '@testing-library/react'
+import { expect } from 'vitest'
+import TodoItem from '../TodoItem.jsx'
+
+const baseTodo = {
+  id: 1,
+  title: 'Sample Todo',
+  done: false,
+  comments: [],
+};
+
+describe('TodoItem', () => {
+
+  it('renders with no comments correctly', () => {
+    render(
+      <TodoItem
+        todo={baseTodo}
+        toggleDone={() => {}}
+        deleteTodo={() => {}}
+        addNewComment={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Sample Todo')).toBeInTheDocument();
+  });
+
+
+  it('renders with comments correctly', () => {
+    const todoWithComment = {
+      ...baseTodo,
+      comments: [
+        { id: 1, message: 'First comment' },
+        { id: 2, message: 'Another comment' },
+      ]
+    };
+
+    render(
+      <TodoItem
+        todo={todoWithComment}
+        toggleDone={() => {}}
+        deleteTodo={() => {}}
+        addNewComment={() => {}}
+      />
+    );
+
+    // ตรวจว่า title แสดง
+    expect(screen.getByText('Sample Todo')).toBeInTheDocument();
+
+    // ตรวจว่า comment แสดง
+    expect(screen.getByText('First comment')).toBeInTheDocument();
+    expect(screen.getByText('Another comment')).toBeInTheDocument();
+  });
+
+});
