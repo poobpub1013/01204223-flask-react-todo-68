@@ -5,6 +5,9 @@ function TodoItem({ todo, toggleDone, deleteTodo, addNewComment }) {
 
   const [newComment, setNewComment] = useState("");
 
+  // ป้องกันกรณี comments เป็น undefined
+  const comments = todo.comments || [];
+
   return (
     <li>
       <span className={todo.done ? "done" : ""}>
@@ -19,12 +22,18 @@ function TodoItem({ todo, toggleDone, deleteTodo, addNewComment }) {
         ❌
       </button>
 
-      {(todo.comments && todo.comments.length > 0) && (
+      {/* 🔥 ส่วนแสดง comment ตาม TDD */}
+
+      {comments.length === 0 ? (
+        <p>No comments</p>
+      ) : (
         <>
-          <b>Comments:</b>
+          <b>Comments ({comments.length})</b>
           <ul>
-            {todo.comments.map(comment => (
-              <li key={comment.id}>{comment.message}</li>
+            {comments.map(comment => (
+              <li key={comment.id}>
+                {comment.message}
+              </li>
             ))}
           </ul>
         </>
@@ -37,10 +46,14 @@ function TodoItem({ todo, toggleDone, deleteTodo, addNewComment }) {
           onChange={(e) => setNewComment(e.target.value)}
         />
 
-        <button onClick={() => {
-          addNewComment(todo.id, newComment);
-          setNewComment("");
-        }}>
+        <button
+          onClick={() => {
+            if (newComment.trim() !== "") {
+              addNewComment(todo.id, newComment);
+              setNewComment("");
+            }
+          }}
+        >
           Add Comment
         </button>
       </div>

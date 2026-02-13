@@ -23,6 +23,31 @@ describe('TodoItem', () => {
     );
 
     expect(screen.getByText('Sample Todo')).toBeInTheDocument();
+
+    // ✅ Step 1: ต้องแสดง No comments
+    expect(screen.getByText('No comments')).toBeInTheDocument();
+  });
+
+
+  it('does not show no comments message when it has a comment', () => {
+    const todoWithComment = {
+      ...baseTodo,
+      comments: [
+        { id: 1, message: 'First comment' },
+      ]
+    };
+
+    render(
+      <TodoItem
+        todo={todoWithComment}
+        toggleDone={() => {}}
+        deleteTodo={() => {}}
+        addNewComment={() => {}}
+      />
+    );
+
+    // ✅ Step 2: ต้องไม่เห็น No comments
+    expect(screen.queryByText('No comments')).not.toBeInTheDocument();
   });
 
 
@@ -47,6 +72,9 @@ describe('TodoItem', () => {
     expect(screen.getByText('Sample Todo')).toBeInTheDocument();
     expect(screen.getByText('First comment')).toBeInTheDocument();
     expect(screen.getByText('Another comment')).toBeInTheDocument();
+
+    // ✅ Step 3: ต้องแสดงจำนวน comment (ใช้ regex)
+    expect(screen.getByText(/2/)).toBeInTheDocument();
   });
 
 
