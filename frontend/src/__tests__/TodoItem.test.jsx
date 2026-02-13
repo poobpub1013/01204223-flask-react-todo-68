@@ -23,18 +23,13 @@ describe('TodoItem', () => {
     );
 
     expect(screen.getByText('Sample Todo')).toBeInTheDocument();
-
-    // ✅ Step 1: ต้องแสดง No comments
     expect(screen.getByText('No comments')).toBeInTheDocument();
   });
-
 
   it('does not show no comments message when it has a comment', () => {
     const todoWithComment = {
       ...baseTodo,
-      comments: [
-        { id: 1, message: 'First comment' },
-      ]
+      comments: [{ id: 1, message: 'First comment' }]
     };
 
     render(
@@ -46,10 +41,8 @@ describe('TodoItem', () => {
       />
     );
 
-    // ✅ Step 2: ต้องไม่เห็น No comments
     expect(screen.queryByText('No comments')).not.toBeInTheDocument();
   });
-
 
   it('renders with comments correctly', () => {
     const todoWithComment = {
@@ -73,46 +66,67 @@ describe('TodoItem', () => {
     expect(screen.getByText('First comment')).toBeInTheDocument();
     expect(screen.getByText('Another comment')).toBeInTheDocument();
 
-    // ✅ Step 3: ต้องแสดงจำนวน comment (ใช้ regex)
+    // ต้องแสดงจำนวน comment (2)
     expect(screen.getByText(/2/)).toBeInTheDocument();
   });
 
-
-  it('calls toggleDone when Toggle button is clicked', async () => {
-    const mockToggle = vi.fn();
+  it('makes callback to toggleDone when Toggle button is clicked', () => {
+    const onToggleDone = vi.fn();
 
     render(
       <TodoItem
         todo={baseTodo}
-        toggleDone={mockToggle}
+        toggleDone={onToggleDone}
         deleteTodo={() => {}}
         addNewComment={() => {}}
       />
     );
 
-    const toggleButton = screen.getByText('Toggle');
-    await userEvent.click(toggleButton);
+    const button = screen.getByRole('button', { name: /toggle/i });
+    button.click();
 
-    expect(mockToggle).toHaveBeenCalledWith(1);
+    expect(onToggleDone).toHaveBeenCalledWith(baseTodo.id);
   });
 
-
-  it('calls deleteTodo when delete button is clicked', async () => {
-    const mockDelete = vi.fn();
+  it('makes callback to deleteTodo when delete button is clicked', () => {
+    const onDeleteTodo = vi.fn();
 
     render(
       <TodoItem
         todo={baseTodo}
         toggleDone={() => {}}
-        deleteTodo={mockDelete}
+        deleteTodo={onDeleteTodo}
         addNewComment={() => {}}
       />
     );
 
-    const deleteButton = screen.getByText('❌');
-    await userEvent.click(deleteButton);
+    const button = screen.getByRole('button', { name: '❌' });
+    button.click();
 
-    expect(mockDelete).toHaveBeenCalledWith(1);
+    expect(onDeleteTodo).toHaveBeenCalledWith(baseTodo.id);
+  });
+
+  it('makes callback to addNewComment when a new comment is added', async () => {
+    const onAddNewComment = vi.fn();
+
+    render(
+      <TodoItem
+        todo={baseTodo}
+        toggleDone={() => {}}
+        deleteTodo={() => {}}
+        addNewComment={onAddNewComment}
+      />
+    );
+
+    // พิมพ์ข้อความ
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'New comment');
+
+    // กดปุ่ม Add Comment
+    const button = screen.getByRole('button', { name: /add comment/i });
+    await userEvent.click(button);
+
+    expect(onAddNewComment).toHaveBeenCalledWith(baseTodo.id, 'New comment');
   });
 
 });
