@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { expect } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { expect, vi } from 'vitest'
 import TodoItem from '../TodoItem.jsx'
 
 const baseTodo = {
@@ -43,12 +44,47 @@ describe('TodoItem', () => {
       />
     );
 
-    // ตรวจว่า title แสดง
     expect(screen.getByText('Sample Todo')).toBeInTheDocument();
-
-    // ตรวจว่า comment แสดง
     expect(screen.getByText('First comment')).toBeInTheDocument();
     expect(screen.getByText('Another comment')).toBeInTheDocument();
+  });
+
+
+  it('calls toggleDone when Toggle button is clicked', async () => {
+    const mockToggle = vi.fn();
+
+    render(
+      <TodoItem
+        todo={baseTodo}
+        toggleDone={mockToggle}
+        deleteTodo={() => {}}
+        addNewComment={() => {}}
+      />
+    );
+
+    const toggleButton = screen.getByText('Toggle');
+    await userEvent.click(toggleButton);
+
+    expect(mockToggle).toHaveBeenCalledWith(1);
+  });
+
+
+  it('calls deleteTodo when delete button is clicked', async () => {
+    const mockDelete = vi.fn();
+
+    render(
+      <TodoItem
+        todo={baseTodo}
+        toggleDone={() => {}}
+        deleteTodo={mockDelete}
+        addNewComment={() => {}}
+      />
+    );
+
+    const deleteButton = screen.getByText('❌');
+    await userEvent.click(deleteButton);
+
+    expect(mockDelete).toHaveBeenCalledWith(1);
   });
 
 });
