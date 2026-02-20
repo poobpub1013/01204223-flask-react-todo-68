@@ -45,7 +45,7 @@ def create_user(username, full_name, password):
 # =========================
 # Login API
 # =========================
-@app.route('/api/login/', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
 
