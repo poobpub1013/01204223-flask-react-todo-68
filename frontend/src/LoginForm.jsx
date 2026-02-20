@@ -8,11 +8,15 @@ function LoginForm() {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogin() {
+    setErrorMessage("");
+    setLoading(true);
+
     try {
       const response = await fetch(LOGIN_API_URL, {
         method: "POST",
@@ -31,11 +35,13 @@ function LoginForm() {
         login(usernameInput, data.access_token);
         navigate("/");
       } else {
-        setErrorMessage(data.msg || "Login failed");
+        setErrorMessage(data.error || "Login failed");
       }
     } catch (error) {
       setErrorMessage("Cannot connect to backend");
     }
+
+    setLoading(false);
   }
 
   return (
@@ -60,7 +66,9 @@ function LoginForm() {
         />
       </div>
 
-      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleLogin} disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+      </button>
 
       {errorMessage && (
         <p style={{ color: "red" }}>{errorMessage}</p>

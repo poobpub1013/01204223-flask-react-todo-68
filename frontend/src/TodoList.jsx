@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import TodoItem from "./TodoItem";
-import { useNavigate } from "react-router-dom";
 
 function TodoList() {
+  // ✅ เอา / ท้ายออกให้ตรงกับ backend
   const TODOLIST_API_URL = "http://localhost:5000/api/todos/";
-  const navigate = useNavigate();
 
   const { accessToken, username, logout } = useAuth();
 
@@ -13,9 +12,7 @@ function TodoList() {
   const [newTitle, setNewTitle] = useState("");
 
   useEffect(() => {
-    if (!accessToken) {
-      navigate("/login");
-    } else {
+    if (accessToken) {
       fetchTodoList();
     }
   }, [accessToken]);
@@ -24,36 +21,37 @@ function TodoList() {
     try {
       const response = await fetch(TODOLIST_API_URL, {
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Network error");
-      }
+      if (!response.ok) throw new Error("Network error");
 
       const data = await response.json();
       setTodoList(data);
     } catch (err) {
+      console.log(err);
       alert("Failed to fetch todo list.");
     }
   }
 
   async function toggleDone(id) {
-    const toggle_api_url = `${TODOLIST_API_URL}${id}/toggle/`;
+    const toggleApiUrl = `${TODOLIST_API_URL}/${id}/toggle`;
 
     try {
-      const response = await fetch(toggle_api_url, {
+      const response = await fetch(toggleApiUrl, {
         method: "PATCH",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
       if (response.ok) {
         const updatedTodo = await response.json();
-        setTodoList(
-          todoList.map((todo) =>
+        setTodoList((prev) =>
+          prev.map((todo) =>
             todo.id === id ? updatedTodo : todo
           )
         );
@@ -64,6 +62,8 @@ function TodoList() {
   }
 
   async function addNewTodo() {
+    if (!newTitle.trim()) return;
+
     try {
       const response = await fetch(TODOLIST_API_URL, {
         method: "POST",
@@ -76,7 +76,7 @@ function TodoList() {
 
       if (response.ok) {
         const newTodo = await response.json();
-        setTodoList([...todoList, newTodo]);
+        setTodoList((prev) => [...prev, newTodo]);
         setNewTitle("");
       }
     } catch (error) {
@@ -85,10 +85,10 @@ function TodoList() {
   }
 
   async function deleteTodo(id) {
-    const delete_api_url = `${TODOLIST_API_URL}${id}/`;
+    const deleteApiUrl = `${TODOLIST_API_URL}/${id}`;
 
     try {
-      const response = await fetch(delete_api_url, {
+      const response = await fetch(deleteApiUrl, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -96,7 +96,9 @@ function TodoList() {
       });
 
       if (response.ok) {
-        setTodoList(todoList.filter((todo) => todo.id !== id));
+        setTodoList((prev) =>
+          prev.filter((todo) => todo.id !== id)
+        );
       }
     } catch (error) {
       console.error("Error deleting todo:", error);
@@ -104,18 +106,16 @@ function TodoList() {
   }
 
   async function addNewComment(todoId, newComment) {
-    try {
-      const url = `${TODOLIST_API_URL}${todoId}/comments/`;
+    const url = `${TODOLIST_API_URL}/${todoId}/comments`;
 
+    try {
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          message: newComment,
-        }),
+        body: JSON.stringify({ message: newComment }),
       });
 
       if (response.ok) {
