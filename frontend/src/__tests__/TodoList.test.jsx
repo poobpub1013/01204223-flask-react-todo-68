@@ -1,6 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
-import App from '../App.jsx'
+import TodoList from '../TodoList.jsx'
+
+// ✅ mock useAuth
+vi.mock('../context/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+import { useAuth } from '../context/AuthContext';
 
 const mockResponse = (body, ok = true) =>
   Promise.resolve({
@@ -34,10 +41,18 @@ const originalTodoList = [
   todoItem2,
 ];
 
-describe('App', () => {
+describe('TodoList', () => {
 
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn());
+
+    // ✅ mock ค่า useAuth
+    useAuth.mockReturnValue({
+      username: 'testuser',
+      accessToken: 'fake-token',
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
   });
 
   afterEach(() => {
@@ -53,7 +68,7 @@ describe('App', () => {
       mockResponse(originalTodoList)
     );
 
-    render(<App />);
+    render(<TodoList />);
 
     expect(await screen.findByText('First todo')).toBeInTheDocument();
     expect(await screen.findByText('Second todo')).toBeInTheDocument();
@@ -74,7 +89,7 @@ describe('App', () => {
       // ตอนกด toggle
       .mockImplementationOnce(() => mockResponse(toggledTodoItem1));
 
-    render(<App />);
+    render(<TodoList />);
 
     // ตอนแรกต้องยังไม่ done
     expect(await screen.findByText('First todo'))
@@ -89,10 +104,15 @@ describe('App', () => {
     expect(await screen.findByText('First todo'))
       .toHaveClass('done');
 
-    // ตรวจสอบว่าเรียก fetch ถูกต้อง
+    // ✅ เช็ค fetch แบบรองรับ headers
     expect(global.fetch).toHaveBeenLastCalledWith(
       expect.stringMatching(/1\/toggle/),
-      { method: 'PATCH' }
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer fake-token',
+        }),
+      })
     );
   });
 
