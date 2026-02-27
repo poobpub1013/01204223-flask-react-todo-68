@@ -29,7 +29,6 @@ PyMySQL==1.1.2
 pyparsing==3.2.5
 pytest==9.0.2
 python-json-logger==4.0.0
-pywin32==306
 pywinpty==3.0.2
 PyYAML==6.0.3
 pyzmq==26.2.0
