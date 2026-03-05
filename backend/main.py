@@ -15,9 +15,23 @@ from models import TodoItem, Comment, User, db
 app = Flask(__name__)
 CORS(app)
 
-# อ่านค่าจาก environment (.env)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+# =========================
+# Config
+# =========================
+
+# ใช้ env ก่อน ถ้าไม่มีใช้ sqlite (เพื่อให้ test รันได้)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    "SQLALCHEMY_DATABASE_URI",
+    "sqlite:///app.db"
+)
+
+# secret key สำหรับ JWT
+app.config['JWT_SECRET_KEY'] = os.getenv(
+    "JWT_SECRET_KEY",
+    "dev-secret-key"
+)
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -77,12 +91,14 @@ def get_todos():
 @jwt_required()
 def add_todo():
     data = request.get_json()
+
     if not data or 'title' not in data:
         return jsonify({'error': 'Invalid todo data'}), 400
 
     todo = TodoItem(title=data['title'])
     db.session.add(todo)
     db.session.commit()
+
     return jsonify(todo.to_dict())
 
 
@@ -92,6 +108,7 @@ def toggle_todo(id):
     todo = TodoItem.query.get_or_404(id)
     todo.done = not todo.done
     db.session.commit()
+
     return jsonify(todo.to_dict())
 
 
@@ -101,15 +118,20 @@ def delete_todo(id):
     todo = TodoItem.query.get_or_404(id)
     db.session.delete(todo)
     db.session.commit()
+
     return jsonify({'message': 'Todo deleted successfully'})
 
 
+# =========================
+# Comment API
+# =========================
 @app.route('/api/todos/<int:todo_id>/comments/', methods=['POST'])
 @jwt_required()
 def add_comment(todo_id):
     todo_item = TodoItem.query.get_or_404(todo_id)
 
     data = request.get_json()
+
     if not data or 'message' not in data:
         return jsonify({'error': 'Comment message is required'}), 400
 
@@ -117,7 +139,15 @@ def add_comment(todo_id):
         message=data['message'],
         todo_id=todo_item.id
     )
+
     db.session.add(comment)
     db.session.commit()
 
     return jsonify(comment.to_dict())
+
+
+# =========================
+# Run Flask
+# =========================
+if __name__ == "__main__":
+    app.run(debug=True)
