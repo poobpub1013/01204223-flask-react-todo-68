@@ -33,6 +33,9 @@ app.config['JWT_SECRET_KEY'] = os.getenv(
     'JWT_SECRET_KEY', CONFIG_JWT_SECRET
 )
 
+# 🔎 debug ว่าตอนนี้ใช้ database อะไร
+print("DATABASE:", app.config['SQLALCHEMY_DATABASE_URI'])
+
 db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
@@ -171,7 +174,6 @@ def serve_frontend(path):
         return send_from_directory('frontend-static', path)
 
     return send_from_directory('frontend-static', 'index.html')
-
 
 # =========================
 # Run server

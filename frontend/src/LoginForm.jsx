@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 function LoginForm() {
-  const LOGIN_API_URL = "http://localhost:8080/api/login/";
+
+  // ❗ ไม่ใช้ localhost
+  const LOGIN_API_URL = "/api/login/";
 
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");

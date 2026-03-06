@@ -3,7 +3,9 @@ import { useAuth } from "./context/AuthContext";
 import TodoItem from "./TodoItem";
 
 function TodoList() {
-  const TODOLIST_API_URL = "http://localhost:8080/api/todos/";
+
+  // ❗ ไม่ใช้ localhost
+  const TODOLIST_API_URL = "/api/todos/";
 
   const { accessToken, username, logout } = useAuth();
 
@@ -29,6 +31,7 @@ function TodoList() {
 
       const data = await response.json();
       setTodoList(data);
+
     } catch (err) {
       console.log(err);
       alert("Failed to fetch todo list.");
@@ -36,6 +39,7 @@ function TodoList() {
   }
 
   async function toggleDone(id) {
+
     const toggleApiUrl = `${TODOLIST_API_URL}${id}/toggle/`;
 
     try {
@@ -48,6 +52,7 @@ function TodoList() {
       });
 
       if (response.ok) {
+
         const updatedTodo = await response.json();
 
         setTodoList((prev) =>
@@ -55,16 +60,20 @@ function TodoList() {
             todo.id === id ? updatedTodo : todo
           )
         );
+
       }
+
     } catch (error) {
       console.error("Error toggling todo:", error);
     }
   }
 
   async function addNewTodo() {
+
     if (!newTitle.trim()) return;
 
     try {
+
       const response = await fetch(TODOLIST_API_URL, {
         method: "POST",
         headers: {
@@ -75,20 +84,25 @@ function TodoList() {
       });
 
       if (response.ok) {
+
         const newTodo = await response.json();
 
         setTodoList((prev) => [...prev, newTodo]);
         setNewTitle("");
+
       }
+
     } catch (error) {
       console.error("Error adding new todo:", error);
     }
   }
 
   async function deleteTodo(id) {
+
     const deleteApiUrl = `${TODOLIST_API_URL}${id}/`;
 
     try {
+
       const response = await fetch(deleteApiUrl, {
         method: "DELETE",
         headers: {
@@ -97,19 +111,24 @@ function TodoList() {
       });
 
       if (response.ok) {
+
         setTodoList((prev) =>
           prev.filter((todo) => todo.id !== id)
         );
+
       }
+
     } catch (error) {
       console.error("Error deleting todo:", error);
     }
   }
 
   async function addNewComment(todoId, newComment) {
+
     const url = `${TODOLIST_API_URL}${todoId}/comments/`;
 
     try {
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -122,6 +141,7 @@ function TodoList() {
       if (response.ok) {
         fetchTodoList();
       }
+
     } catch (error) {
       console.error("Error adding comment:", error);
     }
