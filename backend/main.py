@@ -161,17 +161,19 @@ def add_comment(todo_id):
 # Serve React Frontend
 # =========================
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
 def serve_frontend(path):
 
-    static_dir = os.path.join(app.root_path, 'frontend-static')
+    static_dir = os.path.join(app.root_path, "frontend-static")
 
+    # ถ้าเป็นไฟล์จริง เช่น assets/js/css
     file_path = os.path.join(static_dir, path)
 
     if path != "" and os.path.exists(file_path):
         return send_from_directory(static_dir, path)
 
+    # React router
     return send_from_directory(static_dir, "index.html")
 
 # =========================
