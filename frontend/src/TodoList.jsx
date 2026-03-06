@@ -3,8 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import TodoItem from "./TodoItem";
 
 function TodoList() {
-  // ✅ เอา / ท้ายออกให้ตรงกับ backend
-  const TODOLIST_API_URL = "http://localhost:5000/api/todos/";
+  const TODOLIST_API_URL = "http://localhost:8080/api/todos/";
 
   const { accessToken, username, logout } = useAuth();
 
@@ -37,7 +36,7 @@ function TodoList() {
   }
 
   async function toggleDone(id) {
-    const toggleApiUrl = `${TODOLIST_API_URL}/${id}/toggle`;
+    const toggleApiUrl = `${TODOLIST_API_URL}${id}/toggle/`;
 
     try {
       const response = await fetch(toggleApiUrl, {
@@ -50,6 +49,7 @@ function TodoList() {
 
       if (response.ok) {
         const updatedTodo = await response.json();
+
         setTodoList((prev) =>
           prev.map((todo) =>
             todo.id === id ? updatedTodo : todo
@@ -76,6 +76,7 @@ function TodoList() {
 
       if (response.ok) {
         const newTodo = await response.json();
+
         setTodoList((prev) => [...prev, newTodo]);
         setNewTitle("");
       }
@@ -85,7 +86,7 @@ function TodoList() {
   }
 
   async function deleteTodo(id) {
-    const deleteApiUrl = `${TODOLIST_API_URL}/${id}`;
+    const deleteApiUrl = `${TODOLIST_API_URL}${id}/`;
 
     try {
       const response = await fetch(deleteApiUrl, {
@@ -106,7 +107,7 @@ function TodoList() {
   }
 
   async function addNewComment(todoId, newComment) {
-    const url = `${TODOLIST_API_URL}/${todoId}/comments`;
+    const url = `${TODOLIST_API_URL}${todoId}/comments/`;
 
     try {
       const response = await fetch(url, {
@@ -119,10 +120,10 @@ function TodoList() {
       });
 
       if (response.ok) {
-        await fetchTodoList();
+        fetchTodoList();
       }
     } catch (error) {
-      console.error("Error adding new comment:", error);
+      console.error("Error adding comment:", error);
     }
   }
 
@@ -130,6 +131,7 @@ function TodoList() {
     <>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h1>Todo List</h1>
+
         <div>
           {username && <span>Welcome, {username}! </span>}
           <button onClick={logout}>Logout</button>

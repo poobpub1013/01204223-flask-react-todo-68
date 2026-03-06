@@ -1,12 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
-    get_jwt_identity,
     JWTManager
 )
+
 import click
 import os
 
@@ -16,86 +16,95 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# Config
+# Load config
 # =========================
 
-# ใช้ env ก่อน ถ้าไม่มีใช้ sqlite (เพื่อให้ test รันได้)
+try:
+    from local_config import CONFIG_DB_URI, CONFIG_JWT_SECRET
+except:
+    CONFIG_DB_URI = 'sqlite:///todos.db'
+    CONFIG_JWT_SECRET = 'dev-secret'
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    "SQLALCHEMY_DATABASE_URI",
-    "sqlite:///app.db"
+    'SQLALCHEMY_DATABASE_URI', CONFIG_DB_URI
 )
 
-# secret key สำหรับ JWT
 app.config['JWT_SECRET_KEY'] = os.getenv(
-    "JWT_SECRET_KEY",
-    "dev-secret-key"
+    'JWT_SECRET_KEY', CONFIG_JWT_SECRET
 )
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
 
+# =========================
+# CLI create user
+# =========================
 
-# =========================
-# CLI สร้าง user
-# =========================
 @app.cli.command("create-user")
 @click.argument("username")
 @click.argument("full_name")
 @click.argument("password")
 def create_user(username, full_name, password):
     user = User.query.filter_by(username=username).first()
+
     if user:
         click.echo("User already exists.")
         return
 
     user = User(username=username, full_name=full_name)
     user.set_password(password)
+
     db.session.add(user)
     db.session.commit()
-    click.echo(f"User {username} created successfully.")
 
+    click.echo(f"User {username} created successfully.")
 
 # =========================
 # Login API
 # =========================
-@app.route('/api/login', methods=['POST'])
+
+@app.route('/api/login/', methods=['POST'])
 def login():
+
     data = request.get_json()
 
     if not data or 'username' not in data or 'password' not in data:
-        return jsonify({'error': 'Username and password are required'}), 400
+        return jsonify({'error': 'Username and password required'}), 400
 
     user = User.query.filter_by(username=data['username']).first()
 
     if not user or not user.check_password(data['password']):
         return jsonify({'error': 'Invalid username or password'}), 401
 
-    access_token = create_access_token(identity=user.username)
-    return jsonify(access_token=access_token)
+    token = create_access_token(identity=user.username)
 
+    return jsonify(access_token=token)
 
 # =========================
-# Todos API (Protected)
+# Todo APIs
 # =========================
+
 @app.route('/api/todos/', methods=['GET'])
 @jwt_required()
 def get_todos():
+
     todos = TodoItem.query.all()
-    return jsonify([todo.to_dict() for todo in todos])
+
+    return jsonify([t.to_dict() for t in todos])
 
 
 @app.route('/api/todos/', methods=['POST'])
 @jwt_required()
 def add_todo():
+
     data = request.get_json()
 
     if not data or 'title' not in data:
-        return jsonify({'error': 'Invalid todo data'}), 400
+        return jsonify({'error': 'Invalid data'}), 400
 
     todo = TodoItem(title=data['title'])
+
     db.session.add(todo)
     db.session.commit()
 
@@ -105,8 +114,11 @@ def add_todo():
 @app.route('/api/todos/<int:id>/toggle/', methods=['PATCH'])
 @jwt_required()
 def toggle_todo(id):
+
     todo = TodoItem.query.get_or_404(id)
+
     todo.done = not todo.done
+
     db.session.commit()
 
     return jsonify(todo.to_dict())
@@ -115,29 +127,29 @@ def toggle_todo(id):
 @app.route('/api/todos/<int:id>/', methods=['DELETE'])
 @jwt_required()
 def delete_todo(id):
+
     todo = TodoItem.query.get_or_404(id)
+
     db.session.delete(todo)
     db.session.commit()
 
-    return jsonify({'message': 'Todo deleted successfully'})
+    return jsonify({'message': 'deleted'})
 
 
-# =========================
-# Comment API
-# =========================
 @app.route('/api/todos/<int:todo_id>/comments/', methods=['POST'])
 @jwt_required()
 def add_comment(todo_id):
-    todo_item = TodoItem.query.get_or_404(todo_id)
+
+    todo = TodoItem.query.get_or_404(todo_id)
 
     data = request.get_json()
 
     if not data or 'message' not in data:
-        return jsonify({'error': 'Comment message is required'}), 400
+        return jsonify({'error': 'Message required'}), 400
 
     comment = Comment(
         message=data['message'],
-        todo_id=todo_item.id
+        todo_id=todo.id
     )
 
     db.session.add(comment)
@@ -145,9 +157,30 @@ def add_comment(todo_id):
 
     return jsonify(comment.to_dict())
 
+# =========================
+# Serve React Frontend
+# =========================
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+
+    static_dir = os.path.join(app.root_path, 'frontend-static')
+
+    if path and os.path.isfile(os.path.join(static_dir, path)):
+        return send_from_directory('frontend-static', path)
+
+    return send_from_directory('frontend-static', 'index.html')
+
 
 # =========================
-# Run Flask
+# Run server
 # =========================
+
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(
+        debug=True,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8080))
+    )
