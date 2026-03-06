@@ -33,9 +33,6 @@ app.config['JWT_SECRET_KEY'] = os.getenv(
     'JWT_SECRET_KEY', CONFIG_JWT_SECRET
 )
 
-# 🔎 debug ว่าตอนนี้ใช้ database อะไร
-print("DATABASE:", app.config['SQLALCHEMY_DATABASE_URI'])
-
 db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
@@ -170,10 +167,12 @@ def serve_frontend(path):
 
     static_dir = os.path.join(app.root_path, 'frontend-static')
 
-    if path and os.path.isfile(os.path.join(static_dir, path)):
-        return send_from_directory('frontend-static', path)
+    file_path = os.path.join(static_dir, path)
 
-    return send_from_directory('frontend-static', 'index.html')
+    if path != "" and os.path.exists(file_path):
+        return send_from_directory(static_dir, path)
+
+    return send_from_directory(static_dir, "index.html")
 
 # =========================
 # Run server
